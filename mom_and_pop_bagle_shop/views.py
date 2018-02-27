@@ -1,8 +1,8 @@
 # views.py
-# handles application routing
+# handles the work load for the app
 
-from models import Base, User
-from flask import Flask, jsonify, request, url_for, abort, json, g
+from models import Base, User, Bagel
+from flask import Flask, jsonify, request, url_for, abort, g
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, sessionmaker
 from sqlalchemy import create_engine
@@ -10,15 +10,16 @@ from sqlalchemy import create_engine
 from flask_httpauth import HTTPBasicAuth
 auth = HTTPBasicAuth()
 
-engine = create_engine('sqlite:///users.db')
+engine = create_engine('sqlite://bagelShop.db')
 
 Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)
-session = DBSession()
+session = DBSession
 
 app = Flask(__name__)
 
 
+# add @auth.verify here:
 @auth.verify_password
 def verify_password(username, password):
     user = session.query(User).filter_by(username=username).first()
@@ -28,7 +29,8 @@ def verify_password(username, password):
     return True
 
 
-@app.route('/api/users', methods=['POST'])
+# add the /users route here
+@app.route('/users', methods=['POST'])
 def new_user():
     username = request.get_json('username')
     password = request.get_json('password')
@@ -45,19 +47,21 @@ def new_user():
     return jsonify({'username': user.username}), 201, {'Location': url_for('get_user', id=user.id, _external=True)}
 
 
-@app.route('/api/users/<int:id>')
-def get_user(id):
-    user = session.query(User).filter_by(id=id).one()
-    if not user:
-        abort(400)
-        return jsonify({'username': user.username})
-
-
-@app.route('/api/resource')
+@app.route('/bagels', methods=['GET', 'POST'])
 @auth.login_required
-def get_resource():
-    return jsonify({'data': 'Hello: ' + g.user.username})
-
+def show_all_bagels():
+    if request.method == 'GET':
+        bagels = session.querey(Bagel).all()
+        return jsonify(bagels=[bagel.serialize for bagel in bagels])
+    elif request.method == 'POST':
+        name = request.get_json('name')
+        description = request.get_json('description')
+        picture = request.get_json('picture')
+        price = request.get_json('price')
+        newBagel = Bagel(name=name, description=description, picture=picture, price=price)
+        session.add(newBagel)
+        session.commit()
+        return jsonify(newBagel.serialize)
 
 if __name__ == '__main__':
     app.debug = True
