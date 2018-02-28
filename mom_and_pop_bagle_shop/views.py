@@ -32,8 +32,8 @@ def verify_password(username, password):
 # add the /users route here
 @app.route('/users', methods=['POST'])
 def new_user():
-    username = request.get_json('username')
-    password = request.get_json('password')
+    username = request.args['username']
+    password = request.get_json['password']
     # we need to check for missing information and abort out
     if username is None or password is None:
         abort(400)
@@ -54,10 +54,10 @@ def show_all_bagels():
         bagels = session.querey(Bagel).all()
         return jsonify(bagels=[bagel.serialize for bagel in bagels])
     elif request.method == 'POST':
-        name = request.get_json('name')
-        description = request.get_json('description')
-        picture = request.get_json('picture')
-        price = request.get_json('price')
+        name = request.args['name']
+        description = request.args['description']
+        picture = request.agrs['picture']
+        price = request.args['price']
         newBagel = Bagel(name=name, description=description, picture=picture, price=price)
         session.add(newBagel)
         session.commit()
