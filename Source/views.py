@@ -30,10 +30,12 @@ def verify_password(username, password):
 
 @app.route('/api/users', methods=['POST'])
 def new_user():
-    username = request.get_json('username')
-    password = request.get_json('password')
+    username = request.args['username']
+    password = request.args['password']
+    print(request)
     # we need to check for missing information and abort out
     if username is None or password is None:
+        print("there is no username or password")
         abort(400)
     if session.query(User).filter_by(username=username).first() is not None:
         print("existing user")
